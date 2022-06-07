@@ -1,0 +1,23 @@
+SELECT menu.*
+FROM menu, restaurant, location,
+(
+	SELECT
+		SUM(inputpeople.Hot)!=0 AS Hot,
+		SUM(inputpeople.Vegan)!=0 AS Vegan,
+		SUM(inputpeople.Allerge)!=0 AS Allerge,
+		SUM(inputpeople.Sashimi)!=0 AS Sashimi,
+		SUM(inputpeople.Seafood)!=0 AS Seafood
+	FROM input, inputpeople
+	WHERE input.inputid = inputpeople.inputid
+) AS taboo
+WHERE 
+	restaurant.RestaurantID = menu.RestaurantID AND
+    restaurant.LocationID = location.LocationID AND
+	NOT(taboo.hot AND menu.hot) AND
+	NOT(taboo.vegan AND NOT(menu.vegan)) AND
+    NOT(taboo.Allerge AND menu.Allerge) AND
+    NOT(taboo.Sashimi AND menu.Sashimi) AND
+    NOT(taboo.Seafood AND menu.Seafood) AND
+    menu.Price < 20000 AND
+    location.StationID = 3;
+    
