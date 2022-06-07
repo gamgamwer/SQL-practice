@@ -1,0 +1,51 @@
+DROP VIEW PeopleTravel;
+
+CREATE VIEW PeopleTravel AS 
+(
+	SELECT tab1.PeopleID, tab1.time1, tab2.time2, tab3.time3, tab4.time4
+	FROM 
+		(SELECT inputpeople.PeopleId AS PeopleID, traveltime.RidingTime AS `time1`
+		 FROM inputpeople, traveltime
+		 WHERE (inputpeople.StationId = traveltime.Station1Id AND 1 = traveltime.Station2ID)
+		  OR (inputpeople.StationId = traveltime.Station2Id AND 1 = traveltime.Station1ID)) AS tab1,
+		(SELECT inputpeople.PeopleId AS PeopleID, traveltime.RidingTime AS `time2`
+		 FROM inputpeople, traveltime
+		 WHERE (inputpeople.StationId = traveltime.Station1Id AND 2 = traveltime.Station2ID)
+		  OR (inputpeople.StationId = traveltime.Station2Id AND 2 = traveltime.Station1ID)) AS tab2,
+		(SELECT inputpeople.PeopleId, traveltime.RidingTime AS `time3`
+		FROM inputpeople, traveltime
+		WHERE (inputpeople.StationId = traveltime.Station1Id AND 3 = traveltime.Station2ID)
+			OR (inputpeople.StationId = traveltime.Station2Id AND 3 = traveltime.Station1ID))	AS tab3,
+		(SELECT inputpeople.PeopleId, traveltime.RidingTime AS `time4`
+		FROM inputpeople, traveltime
+		WHERE (inputpeople.StationId = traveltime.Station1Id AND 4 = traveltime.Station2ID)
+			OR (inputpeople.StationId = traveltime.Station2Id AND 4 = traveltime.Station1ID)) AS tab4
+	WHERE tab1.PeopleID = tab2.PeopleID AND
+		tab2.PeopleID = tab3.PeopleID AND
+		tab3.PeopleID = tab4.PeopleID
+	ORDER BY PeopleID ASC
+);
+
+SELECT * FROM PeopleTravel;
+
+SELECT avgtable.StationId, avgtime, stdtime,
+	RANK() OVER (ORDER BY avgtable.avgtime ASC) AS avgrank,
+    RANK() OVER (ORDER BY stdtable.stdtime ASC) AS stdrank,
+    RANK() OVER (ORDER BY avgtable.avgtime ASC) + RANK() OVER (ORDER BY stdtable.stdtime ASC) AS totranksum
+FROM
+	(SELECT 1 AS StationID, AVG(time1) AS avgtime FROM PeopleTravel
+	UNION
+	SELECT 2 AS StationID, AVG(time2) FROM PeopleTravel
+	UNION
+	SELECT 3 AS StationID, AVG(time3) FROM PeopleTravel
+	UNION
+	SELECT 4 AS StationID, AVG(time4) FROM PeopleTravel) AS avgtable,
+	(SELECT 1 AS StationID, STD(time1) AS stdtime FROM PeopleTravel
+	UNION
+	SELECT 2 AS StationID, STD(time2) FROM PeopleTravel
+	UNION
+	SELECT 3 AS StationID, STD(time3) FROM PeopleTravel
+	UNION
+	SELECT 4 AS StationID, STD(time4) FROM PeopleTravel) AS stdtable
+WHERE avgtable.StationID = stdtable.StationID
+ORDER BY totranksum;
