@@ -1,0 +1,185 @@
+DROP DATABASE fdaproject;
+
+CREATE DATABASE fdaproject;
+
+#데이터 입력 경로설정(1)
+SHOW VARIABLES LIKE 'secure_file_priv';
+# 디렉토리 경로 확인하고, 윈도우 검색창에 입력해서 my.ini 확인
+# my.ini 파일 열고 들어가서 안에 secure-file-priv = '원하는 파일경로'로 수정(쿼리사용한 csv 임포트 위한 조건)
+
+#데이터 입력 경로설정(2), (1)안될경우
+SHOW VARIABLES LIKE 'datadir';
+# 현재 SQL 디렉토리 경로 확인하고, fdaproject 데이터베이스의 파일경로 안에 csv파일 넣어놓기
+
+CREATE TABLE fdaproject.appointment(
+	`AppointId`		INT NOT NULL,
+    `Day` 			VARCHAR(10),
+    `Hours` 		VARCHAR(30),
+    `Event` 		VARCHAR(20),    
+    `Drink` 		BOOLEAN,
+    `MenuName` 		VARCHAR(50),
+    `RestaurantId`	INT NOT NULL,
+    PRIMARY KEY(AppointId)
+);
+
+LOAD DATA INFILE 'appointment.csv' 
+INTO TABLE fdaproject.appointment 
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.attendance(
+	`AppointId`		INT NOT NULL,
+    `PeopleId`		INT NOT NULL
+);
+
+LOAD DATA INFILE 'attendance.csv' 
+INTO TABLE fdaproject.attendance
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.location(
+	`LocationId`	INT NOT NULL,
+    `StationId`		INT NOT NULL,
+    `WalkTime`		INT,
+    PRIMARY KEY(LocationId)
+);
+
+LOAD DATA INFILE 'location.csv' 
+INTO TABLE fdaproject.location
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.menu(
+	`MenuId`		INT	NOT NULL,
+    `RestaurantId`	INT NOT NULL,
+    `MenuName` 		VARCHAR(50),
+    `Category1` 	VARCHAR(10),
+    `Category2` 	VARCHAR(20),
+    `Price` 		INT,
+    `Hot` 			BOOLEAN,
+    `Vegan` 		BOOLEAN,
+    `Allerge` 		BOOLEAN,
+    `Sashimi` 		BOOLEAN,
+    `Seafood`		BOOLEAN,
+    PRIMARY KEY(MenuId)
+);
+
+LOAD DATA INFILE 'menu.csv' 
+INTO TABLE fdaproject.menu
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.people(
+	`PeopleId` 		INT NOT NULL, 
+    `Gender` 		VARCHAR(5),
+    `Age` 			INT,
+    PRIMARY KEY(PeopleId)
+);
+
+LOAD DATA INFILE 'people.csv' 
+INTO TABLE fdaproject.people
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+DROP TABLE fdaproject.restaurant;
+
+CREATE TABLE fdaproject.restaurant(
+	`RestaurantId` 	INT NOT NULL,
+    `LocationId` 	INT NOT NULL,
+	`RestaurantName` VARCHAR(50),
+    `AvgWaitTime` 	INT,
+    `RoomAvailable`	BOOLEAN,
+    `MaxPeople` 	INT,
+    `Drink` 		BOOLEAN,
+    `ReviewNumber`	INT,
+    `Star` 			FLOAT,
+    `SnsFollower`	INT,
+	PRIMARY KEY(RestaurantId)
+);
+
+LOAD DATA INFILE 'restaurant.csv' 
+INTO TABLE fdaproject.restaurant
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.station(
+	`StationId` 	INT NOT NULL,
+    `StationName`	VARCHAR(20),
+    PRIMARY KEY(StationId)
+);
+
+LOAD DATA INFILE 'station.csv' 
+INTO TABLE fdaproject.station
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.traveltime(
+	`Station1Id` 	INT NOT NULL,
+    `Station2Id` 	INT NOT NULL,
+    `RidingTime`	INT
+);
+
+LOAD DATA INFILE 'traveltime.csv' 
+INTO TABLE fdaproject.traveltime
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+CREATE TABLE fdaproject.workhour(
+	`RestaurantId`	INT NOT NULL,
+    `Hours`			VARCHAR(10),
+    `Session1Start` TIME,
+    `Session1End` 	TIME,
+    `Session2Start` TIME,
+    `Session2End`	TIME 
+);
+
+LOAD DATA INFILE 'workhour.csv' 
+INTO TABLE fdaproject.workhour
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+DROP TABLE input;
+
+CREATE TABLE fdaproject.input(
+	`InputId`	INT NOT NULL,
+    `day`		VARCHAR(10),
+    `time`		VARCHAR(10),
+    `event` 	VARCHAR(10),
+    `drink` 	BOOLEAN,
+    `room`		BOOLEAN,
+    `minimumstar` FLOAT,
+    `pricelimit` INT
+);
+
+LOAD DATA INFILE 'input.csv' 
+INTO TABLE fdaproject.input
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+DROP TABLE inputpeople;
+
+CREATE TABLE fdaproject.inputpeople(
+	`InputId`		INT NOT NULL,
+    `PeopleID`		INT,
+    `StationID`		INT,
+    `Hot` 			BOOLEAN,
+    `Vegan` 		BOOLEAN,
+    `Allerge` 		BOOLEAN,
+    `Sashimi` 		BOOLEAN,
+    `Seafood`		BOOLEAN
+);
+
+LOAD DATA INFILE 'inputpeople.csv' 
+INTO TABLE fdaproject.inputpeople
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
