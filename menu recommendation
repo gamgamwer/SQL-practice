@@ -1,0 +1,72 @@
+USE fdaproject;
+
+DROP VIEW similarmatrix;
+
+CREATE VIEW similarmatrix AS
+(
+	SELECT appointvector.appointid AS appointid,
+	(
+		(inputvector.day = appointvector.day) +
+		(inputvector.hours = appointvector.hours) +
+		(inputvector.event = appointvector.event) +
+		(inputvector.drink = appointvector.drink) +
+		1 - ABS(inputvector.avgage - appointvector.avgage) / (minmaxmatrix.maxavgage-minmaxmatrix.minavgage) +
+		1 - ABS(inputvector.numpeople - appointvector.numpeople) / (minmaxmatrix.maxnumpeople-minmaxmatrix.minnumpeople) +
+		1 - ABS(inputvector.genderrate - appointvector.genderrate) / (minmaxmatrix.maxgenderrate-minmaxmatrix.mingenderrate)
+	) AS similarity
+	FROM
+		(SELECT 10000 AS appointid, 
+			input.day AS day, 
+			input.time AS hours, 
+			input.event AS event, 
+			input.drink AS drink,
+			COUNT(*) AS numpeople,
+			AVG(people.Age) AS avgage,
+			COUNT(CASE WHEN people.gender='F' THEN 1 END) / COUNT(*) AS genderrate
+		FROM input, inputpeople, people
+		WHERE input.inputid = inputpeople.inputid AND
+			inputpeople.peopleid = people.peopleid) AS inputvector,
+		(SELECT appointment.appointid AS appointid, 
+			appointment.day AS day, 
+			appointment.hours AS hours, 
+			appointment.event AS event, 
+			appointment.drink AS drink, 
+			COUNT(attendance.peopleID) AS numpeople,
+			AVG(people.Age) AS avgage,
+			COUNT(CASE WHEN people.Gender='F' THEN 1 END) / COUNT(*) AS genderrate
+		FROM appointment, attendance, people
+		WHERE appointment.appointid = attendance.appointid AND
+			attendance.peopleid = people.peopleid
+		GROUP BY appointment.appointid) AS appointvector,
+		(
+		SELECT MAX(avgage) AS maxavgage, MIN(avgage) AS minavgage, 
+			MAX(numpeople) AS maxnumpeople, MIN(numpeople) AS minnumpeople, 
+			MAX(genderrate) AS maxgenderrate, MIN(genderrate) AS mingenderrate
+		FROM
+		(SELECT appointment.appointid AS appointid, 
+				appointment.day AS day, 
+				appointment.hours AS hours, 
+				appointment.event AS event, 
+				appointment.drink AS drink, 
+				COUNT(attendance.peopleID) AS numpeople,
+				AVG(people.Age) AS avgage,
+				COUNT(CASE WHEN people.Gender='F' THEN 1 END) / COUNT(*) AS genderrate
+			FROM appointment, attendance, people
+			WHERE appointment.appointid = attendance.appointid AND
+				attendance.peopleid = people.peopleid
+			GROUP BY appointment.appointid) AS appointvector
+		) AS minmaxmatrix
+	WHERE inputvector.appointid <> appointvector.appointid
+);
+
+SELECT rankmatrix.*, appointment.menuname, menu.category1, menu.category2
+FROM
+	(SELECT appointid, similarity,
+		RANK() OVER (ORDER BY similarity DESC) AS similar_rank
+	FROM similarmatrix) AS rankmatrix,
+    appointment,
+    menu
+WHERE rankmatrix.appointid = appointment.appointid AND
+	appointment.menuname = menu.menuname
+ORDER BY rankmatrix.similar_rank
+LIMIT 10;
