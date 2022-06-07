@@ -1,0 +1,20 @@
+USE fdaproject;
+SELECT RestaurantName
+FROM restaurant, input, inputpeople
+WHERE
+	input.inputid = inputpeople.inputid AND
+	(restaurant.MaxPeople >= COUNT(inputpeople.peopleID)) AND
+    (input.drink AND NOT(restaurant.drink)) AND
+    (input.roomwant AND NOT(restaurant.RoomAvailable)) AND
+    restaurant.Star >= input.minimumstar;
+    
+SELECT 
+	*,
+    restaurant.AvgWaittime + location.Walktime AS totalwaittime,
+    RANK() OVER (ORDER BY restaurant.ReviewNumber DESC) AS reviewrank,
+    RANK() OVER (ORDER BY restaurant.Star DESC) AS starrank,
+    RANK() OVER (ORDER BY restaurant.SnsFollower DESC) AS followerrank,
+	RANK() OVER (ORDER BY restaurant.AvgWaittime + location.Walktime DESC) AS timerank
+FROM restaurant, location
+WHERE restaurant.LocationID = location.LocationID
+ORDER BY star, ReviewNumber;
